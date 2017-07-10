@@ -56,7 +56,22 @@
         <div id="{{ endpoint.path|slugify }}" class="panel-collapse collapse" role="tabpanel">
           <div class="panel-body">
             {% if endpoint.docstring %}
-            <p class="lead">{{ endpoint.docstring }}</p>
+            <p class="lead">
+                {% if endpoint.docstring.class %}
+                <pre>{{ endpoint.docstring.class }}</pre>
+                {% endif %}
+                {% if endpoint.docstring.create %}
+                <strong>create:</strong> <pre>{{ endpoint.docstring.create }}</pre>
+                {% endif %}
+                {% if endpoint.docstring.update %}
+                <strong>update:</strong> <pre>{{ endpoint.docstring.update }}</pre>
+                {% endif %}
+                {% if endpoint.docstring.destroy %}
+                <strong>destroy:</strong> <pre>{{ endpoint.docstring.destroy }}</pre>
+                {% endif %}
+            </p>
+            </p>
+            </p>
             {% endif %}
 
             {% if endpoint.errors %}
@@ -67,7 +82,11 @@
             <p class="fields-desc">Fields:</p>
               <ul class="list fields">
               {% for field in endpoint.fields %}
-                <li class="field">{{ field.name }}: {{ field.type }} {% if field.required %}<span class="label label-primary label-required" title="Required">R</span>{% endif %}</li>
+              <li class="field">{% if field.required %}<strong>{% endif %}{{ field.name }}{% if field.required %}</strong>{% endif %}: <em>{{ field.type }}</em>
+              {% if field.required %}<span class="label label-primary label-required" title="Required">Req</span>{% endif %}
+              {% if field.read_only %}<span class="label label-primary" title="Read only">RO</span>{% endif %}
+              {% if field.default %}  default: <em>{{ field.default }}</em>{% endif %}
+              </li>
               {% endfor %}
               </ul>
             {% elif not endpoint.errors %}

@@ -1,7 +1,11 @@
 import json
 import inspect
 from django.contrib.admindocs.views import simplify_regex
+from django.db.models.fields import NOT_PROVIDED
 from django.utils.encoding import force_str
+
+from rest_framework.fields import empty
+
 
 
 class ApiEndpoint(object):
@@ -29,13 +33,38 @@ class ApiEndpoint(object):
         return [force_str(m).upper() for m in self.callback.cls.http_method_names if hasattr(self.callback.cls, m)]
 
     def __get_docstring__(self):
-        return inspect.getdoc(self.callback)
+        def _add_attribute_doc(docstring, cls, crud):
+            if hasattr(cls, crud):
+                doc = inspect.getdoc(getattr(cls, crud))
+                if doc:
+                    docstring[crud] = doc
+
+        docstring = {}
+        docstring['class'] = inspect.getdoc(self.callback)
+        if hasattr(self.callback.cls, 'serializer_class'):
+            _add_attribute_doc(docstring, self.callback.cls, "create")
+            _add_attribute_doc(docstring, self.callback.cls, "update")
+            _add_attribute_doc(docstring, self.callback.cls, "destroy")
+
+        return docstring
 
     def __get_permissions_class__(self):
         for perm_class in self.pattern.callback.cls.permission_classes:
             return perm_class.__name__
 
     def __get_serializer_fields__(self):
+        def _default_str(field_name, field_default, model_fields):
+            if field_default is not empty:
+                return str(field_default)
+            if model_fields is None:
+                return None
+            for model_field in model_fields:
+                if model_field.name == field_name:
+                    if hasattr(model_field, 'default'):
+                        if model_field.default is not NOT_PROVIDED:
+                            return str(model_field.default)
+            return None
+
         fields = []
         serializer = None
 
@@ -47,11 +76,21 @@ class ApiEndpoint(object):
 
         if hasattr(serializer, 'get_fields'):
             try:
-                fields = [{
-                    "name": key,
-                    "type": str(field.__class__.__name__),
-                    "required": field.required
-                } for key, field in serializer().get_fields().items()]
+                model_fields = None
+                if hasattr(serializer, 'Meta'):
+                    if hasattr(serializer.Meta, 'model'):
+                        model_fields = serializer.Meta.model._meta.get_fields()
+
+                fields = []
+                for field_name, field in serializer().get_fields().items():
+                    fields.append({
+                        "name": field_name,
+                        "type": str(field.__class__.__name__),
+                        "read_only": field.read_only,
+                        "default": _default_str(field_name, field.default,model_fields),
+                        "required": field.required
+                    })
+
             except KeyError as e:
                 self.errors = e
                 fields = []
