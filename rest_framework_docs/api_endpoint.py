@@ -31,7 +31,6 @@ class ApiEndpoint(object):
         return simplify_regex(self.pattern.regex.pattern)
 
     def __get_allowed_methods__(self):
-
         viewset_methods = []
         if self.drf_router:
             for prefix, viewset, basename in self.drf_router.registry:
@@ -66,20 +65,7 @@ class ApiEndpoint(object):
         return viewset_methods + view_methods
 
     def __get_docstring__(self):
-        def _add_attribute_doc(docstring, cls, crud):
-            if hasattr(cls, crud):
-                doc = inspect.getdoc(getattr(cls, crud))
-                if doc:
-                    docstring[crud] = doc
-
-        docstring = {}
-        docstring['class'] = inspect.getdoc(self.callback)
-        if hasattr(self.callback.cls, 'serializer_class'):
-            _add_attribute_doc(docstring, self.callback.cls, "create")
-            _add_attribute_doc(docstring, self.callback.cls, "update")
-            _add_attribute_doc(docstring, self.callback.cls, "destroy")
-
-        return docstring
+        return inspect.getdoc(self.callback)
 
     def __get_permissions_class__(self):
         for perm_class in self.pattern.callback.cls.permission_classes:
