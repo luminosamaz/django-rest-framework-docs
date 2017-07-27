@@ -17,9 +17,16 @@ class ApiEndpoint(object):
         self.allowed_methods = self.__get_allowed_methods__()
         # self.view_name = pattern.callback.__name__
         self.errors = None
-        self.fields = self.__get_serializer_fields__()
+        self.fields = None
         self.fields_json = self.__get_serializer_fields_json__()
         self.permissions = self.__get_permissions_class__()
+        self.is_public = self._is_public()
+
+    def _is_public(self):
+        if hasattr(self.callback.cls, "publicly_documented"):
+            if self.callback.cls.publicly_documented:
+                return True
+        return False
 
     def __get_path__(self, parent_pattern):
         if parent_pattern:

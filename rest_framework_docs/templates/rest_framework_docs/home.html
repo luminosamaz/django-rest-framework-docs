@@ -56,7 +56,7 @@
         <div id="{{ endpoint.path|slugify }}" class="panel-collapse collapse" role="tabpanel">
           <div class="panel-body">
             {% if endpoint.docstring %}
-            <p class="lead">{{ endpoint.docstring }}</p>
+            <p class="lead"><pre>{{ endpoint.docstring }}</pre></p>
             {% endif %}
 
             {% if endpoint.errors %}
@@ -70,8 +70,6 @@
                 <li class="field">{{ field.name }}: {{ field.type }} {% if field.required %}<span class="label label-primary label-required" title="Required">R</span>{% endif %}</li>
               {% endfor %}
               </ul>
-            {% elif not endpoint.errors %}
-            <p>No fields.</p>
             {% endif %}
           </div>
         </div>
